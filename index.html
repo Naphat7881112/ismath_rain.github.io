@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Travel Time Prediction</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Interactive Travel Time Prediction</h1>
+    
+    <form id="inputForm">
+        <label for="X2">Distance (X2) in km:</label>
+        <input type="number" id="X2" name="X2" value="15" required><br><br>
+        
+        <label for="X3">Private Vehicle (X3) (0 or 1):</label>
+        <select id="X3" name="X3">
+            <option value="1">Yes</option>
+            <option value="0">No</option>
+        </select><br><br>
+        
+        <button type="button" onclick="updateGraph()">Update Graph</button>
+    </form>
+    
+    <div id="graph"></div>
+    
+    <h2>Rainfall Categories and Predicted Travel Time</h2>
+    <table id="rainfallTable">
+        <thead>
+            <tr>
+                <th>Rainfall Category</th>
+                <th>Rainfall Range (mm)</th>
+                <th>Predicted Travel Time (min)</th>
+                <th>Error Range (min)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Rows will be dynamically populated -->
+        </tbody>
+    </table>
+
+    <script>
+        const RMSE = 10.19;
+        const rainfallCategories = [
+            { name: "No Rain", min: 0, max: 0.1 },
+            { name: "Light Rain", min: 0.1, max: 10 },
+            { name: "Moderate Rain", min: 10.1, max: 35 },
+            { name: "Heavy Rain", min: 35.1, max: 90 },
+            { name: "Very Heavy Rain", min: 90.1, max: 200 }
+        ];
+
+        function calculateY(x1, x2, x3) {
+            return 16.130 + 0.222 * x1 + 0.695 * x2 - 7.005 * x3;
+        }
+
+        function updateGraph() {
+            const x2 = parseFloat(document.getElementById('X2').value);
+            const x3 = parseInt(document.getElementById('X3').value);
+
+            const x1Values = Array.from({ length: 200 }, (_, i) => i);
+            const yValues = x1Values.map(x1 => calculateY(x1, x2, x3));
+            const yUpper = yValues.map(y => y + RMSE);
+            const yLower = yValues.map(y => y - RMSE);
+
+            const trace1 = {
+                x: x1Values,
+                y: yValues,
+                type: 'bar',
+                name: 'Predicted Travel Time',
+                marker: { color: 'rgba(54, 162, 235, 0.6)' }
+            };
+
+            const trace2 = {
+                x: x1Values,
+                y: yUpper,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Upper Bound',
+                line: { dash: 'dot', color: 'rgba(153, 102, 255, 1)' }
+            };
+
+            const trace3 = {
+                x: x1Values,
+                y: yLower,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Lower Bound',
+                line: { dash: 'dot', color: 'rgba(255, 159, 64, 1)' }
+            };
+
+            const data = [trace1, trace2, trace3];
+
+            const layout = {
+                title: 'Travel Time vs Rainfall',
+                xaxis: { title: 'Rainfall (mm)' },
+                yaxis: { title: 'Travel Time (minutes)' },
+                barmode: 'overlay'
+            };
+
+            Plotly.newPlot('graph', data, layout);
+
+            updateRainfallTable(x2, x3);
+        }
+
+        function updateRainfallTable(x2, x3) {
+            const tableBody = document.querySelector('#rainfallTable tbody');
+            tableBody.innerHTML = '';
+
+            rainfallCategories.forEach(category => {
+                const avgRainfall = (category.min + category.max) / 2;
+                const predictedTime = calculateY(avgRainfall, x2, x3);
+                const minTime = (predictedTime - RMSE).toFixed(2);
+                const maxTime = (predictedTime + RMSE).toFixed(2);
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${category.name}</td>
+                    <td>${category.min} - ${category.max}</td>
+                    <td>${predictedTime.toFixed(2)}</td>
+                    <td>${minTime} - ${maxTime}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        window.onload = updateGraph;
+    </script>
+</body>
+</html>
