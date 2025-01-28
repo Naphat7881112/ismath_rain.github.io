@@ -1,136 +1,71 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ความสัมพันธ์ระหว่างปริมาณน้ำฝนและเวลาเดินทาง</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rainfall vs Travel Time</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+        }
+        th {
+            background-color: #f5f5f5;
+        }
+    </style>
 </head>
-<body class="container is-max-desktop p-4">
-    <div class="card">
-        <header class="card-header">
-            <p class="card-header-title">
-                ความสัมพันธ์ระหว่างปริมาณน้ำฝนและเวลาเดินทาง
-            </p>
-        </header>
-        <div class="card-content">
-            <form id="predictionForm" class="mb-4">
-                <div class="field">
-                    <label class="label">ระยะทาง (กม.) - ค่าคงที่</label>
-                    <div class="control">
-                        <input type="number" class="input" id="distanceInput" value="10" step="0.1" required>
+<body>
+    <section class="section">
+        <div class="container">
+            <h1 class="title has-text-centered">ปริมาณน้ำฝนและระยะเวลาเดินทาง</h1>
+            <div class="box">
+                <form id="input-form">
+                    <div class="field">
+                        <label class="label">ระยะทาง (กม.):</label>
+                        <div class="control">
+                            <input class="input" type="number" id="distance" placeholder="เช่น 10" required>
+                        </div>
                     </div>
-                </div>
-                <div class="field">
-                    <label class="label">การเดินทางด้วยพาหนะส่วนตัว - ค่าคงที่</label>
-                    <div class="control">
-                        <label class="radio">
-                            <input type="radio" name="privateVehicle" value="0" checked required>
-                            สาธารณะ
-                        </label>
-                        <label class="radio">
-                            <input type="radio" name="privateVehicle" value="1" required>
-                            ส่วนตัว
-                        </label>
+                    <div class="field">
+                        <label class="label">ใช้พาหนะส่วนตัว?</label>
+                        <div class="control">
+                            <div class="select">
+                                <select id="private_vehicle">
+                                    <option value="1">ใช่</option>
+                                    <option value="0">ไม่ใช่</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </form>
-
-            <div id="predictionChart"></div>
+                    <div class="field">
+                        <div class="control">
+                            <button class="button is-primary" type="submit">คำนวณ</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div id="graph-container"></div>
+            <div class="box">
+                <h2 class="subtitle">ตารางช่วงเวลาการเดินทาง</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>เกณฑ์ปริมาณน้ำฝน</th>
+                            <th>ช่วงเวลาที่ใช้ (นาที)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rainfall-table"></tbody>
+                </table>
+            </div>
         </div>
-    </div>
-
-    <script>
-        const RMSE = 10.19;
-        const coefficients = {
-            intercept: 16.130,
-            X1: 0.222,   // ปริมาณน้ำฝน
-            X2: 0.695,   // ระยะทาง
-            X3: -7.005   // พาหนะส่วนตัว
-        };
-
-        function calculateTravelTime(X1, X2, X3) {
-            return coefficients.intercept + 
-                   (coefficients.X1 * X1) + 
-                   (coefficients.X2 * X2) + 
-                   (coefficients.X3 * X3);
-        }
-
-        function generatePredictionData(distance, privateVehicle) {
-            const rainfallValues = Array.from({length: 201}, (_, i) => i);
-            const travelTimes = rainfallValues.map(rainfall => 
-                calculateTravelTime(rainfall, distance, privateVehicle)
-            );
-            
-            const upperBand = travelTimes.map(time => time + RMSE);
-            const lowerBand = travelTimes.map(time => time - RMSE);
-
-            return {
-                rainfallValues,
-                travelTimes,
-                upperBand,
-                lowerBand
-            };
-        }
-
-        function updateChart() {
-            const distance = parseFloat(document.getElementById('distanceInput').value);
-            const privateVehicle = document.querySelector('input[name="privateVehicle"]:checked').value;
-            
-            const { rainfallValues, travelTimes, upperBand, lowerBand } = generatePredictionData(distance, privateVehicle);
-
-            const trace1 = {
-                x: rainfallValues,
-                y: upperBand,
-                type: 'scatter',
-                mode: 'lines',
-                line: { color: 'transparent' },
-                name: 'Upper Bound'
-            };
-
-            const trace2 = {
-                x: rainfallValues,
-                y: lowerBand,
-                type: 'scatter',
-                mode: 'lines',
-                fill: 'tonexty',
-                fillcolor: 'rgba(0,100,200,0.2)',
-                line: { color: 'transparent' },
-                name: 'Lower Bound'
-            };
-
-            const trace3 = {
-                x: rainfallValues,
-                y: travelTimes,
-                type: 'scatter',
-                mode: 'line',
-                line: { color: 'blue' },
-                name: 'เวลาเดินทาง'
-            };
-
-            const layout = {
-                title: 'อิทธิพลของปริมาณน้ำฝนต่อเวลาเดินทาง',
-                xaxis: { 
-                    title: 'ปริมาณน้ำฝน (มม.)', 
-                    range: [0, 200] 
-                },
-                yaxis: { 
-                    title: 'เวลาเดินทาง (นาที)' 
-                },
-                showlegend: true
-            };
-
-            Plotly.newPlot('predictionChart', [trace1, trace2, trace3], layout);
-        }
-
-        // Event listeners
-        document.getElementById('distanceInput').addEventListener('change', updateChart);
-        document.getElementsByName('privateVehicle').forEach(radio => 
-            radio.addEventListener('change', updateChart)
-        );
-
-        // Initial chart render
-        updateChart();
-    </script>
+    </section>
+    <script src="script.js"></script>
 </body>
 </html>
