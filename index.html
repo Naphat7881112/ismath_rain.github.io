@@ -4,20 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rainfall vs Travel Time</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@100..700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
     <style>
+        body {
+            background-color: #f0f8ff;
+            font-family: "Anuphan", serif;
+        }
+        .title, .subtitle {
+            color: #1e90ff;
+            font-family: "Anuphan", serif;
+            font-weight: 700;
+        }
+        .box {
+            border: 1px solid #1e90ff;
+        }
+        .button.is-primary {
+            background-color: #1e90ff;
+            border-color: #1e90ff;
+        }
+        .button.is-primary:hover {
+            background-color: #1c86ee;
+            border-color: #1c86ee;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
             text-align: center;
+            font-family: "Anuphan", serif;
         }
         th, td {
-            border: 1px solid black;
+            border: 1px solid #1e90ff;
             padding: 8px;
         }
         th {
-            background-color: #f5f5f5;
+            background-color: #1e90ff;
+            color: white;
+            font-weight: 700;
+        }
+        td {
+            background-color: #f0f8ff;
+        }
+        .note {
+            color: red;
+            font-style: italic;
+            margin-top: 20px; /* เพิ่มระยะห่างด้านบน */
+            font-family: "Anuphan", serif;
+        }
+        .table-container:nth-of-type(2) th {
+            color: white; /* เปลี่ยนสีตัวอักษรหัวแถวของตารางที่ 2 เป็นสีขาว */
         }
     </style>
 </head>
@@ -30,11 +69,11 @@
                     <div class="field">
                         <label class="label">ระยะทาง (กม.):</label>
                         <div class="control">
-                            <input class="input" type="number" id="distance" placeholder="เช่น 10" required>
+                            <input class="input" type="number" id="distance" placeholder="เช่น 10" step="0.01" min="0" required>
                         </div>
                     </div>
                     <div class="field">
-                        <label class="label">ใช้พาหนะส่วนตัว?</label>
+                        <label class="label">คุณใช้พาหนะส่วนตัวหรือไม่</label>
                         <div class="control">
                             <div class="select">
                                 <select id="private_vehicle">
@@ -51,18 +90,30 @@
                     </div>
                 </form>
             </div>
-            <div id="graph-container"></div>
+            <div class="box">
+                <h2 class="subtitle">กราฟเวลาการเดินทางตามปริมาณน้ำฝน</h2>
+                <div id="graph-container" style="width: 100%; height: 400px;"></div>
+                <p class="note">หมายเหตุ: ผลจากการคำนวณที่ได้จากโครงงานมีความคลาดเคลื่อนอันเนื่องมาจากปัจจัยอื่น ๆ ที่สามารถส่งผลกระทบต่อระยะเวลาในการเดินทางได้ เช่น สภาพการจราจร ช่วงเวลาในการเดินทาง สภาพถนน ฯลฯ โปรดใช้ผลการคำนวณอย่างมีวิจารณญาณ</p>
+            </div>
             <div class="box">
                 <h2 class="subtitle">ตารางช่วงเวลาการเดินทาง</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>เกณฑ์ปริมาณน้ำฝน</th>
-                            <th>ช่วงเวลาที่ใช้ (นาที)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="rainfall-table"></tbody>
-                </table>
+                <div class="table-container">
+                    <table class="table is-bordered is-striped is-fullwidth">
+                        <thead>
+                            <tr>
+                                <th style="color: white;">เกณฑ์ปริมาณน้ำฝน</th>
+                                <th style="color: white;">ช่วงเวลาที่ใช้ (นาที)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rainfall-table"></tbody>
+                    </table>
+                </div>
+                <p class="note">หมายเหตุ: ผลจากการคำนวณที่ได้จากโครงงานมีความคลาดเคลื่อนอันเนื่องมาจากปัจจัยอื่น ๆ ที่สามารถส่งผลกระทบต่อระยะเวลาในการเดินทางได้ เช่น สภาพการจราจร ช่วงเวลาในการเดินทาง สภาพถนน ฯลฯ โปรดใช้ผลการคำนวณอย่างมีวิจารณญาณ</p>
+            </div>
+            <div class="box">
+                <h2 class="subtitle">ข้อมูลฝนรายวัน</h2>
+                <div class="table-container" id="rain_table"></div>
+                <p class="note">หมายเหตุ: ผลจากการคำนวณที่ได้จากโครงงานมีความคลาดเคลื่อนอันเนื่องมาจากปัจจัยอื่น ๆ ที่สามารถส่งผลกระทบต่อระยะเวลาในการเดินทางได้ เช่น สภาพการจราจร ช่วงเวลาในการเดินทาง สภาพถนน ฯลฯ โปรดใช้ผลการคำนวณอย่างมีวิจารณญาณ</p>
             </div>
         </div>
     </section>
