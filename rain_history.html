@@ -1,0 +1,184 @@
+
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>CSV File to HTML Table Using AJAX jQuery</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" />
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+ </head>
+ <body>
+  <div class="container">
+   <div class="table-responsive">
+    <h2 align="center">xxxxxxxxxxxxxxxxxxxxxxxx</h2>
+    <br />
+    <br />
+      ระยะทาง: <input type="text" id="dist" name="fname" value="10"><br>
+      ใช้พาหนะ: 
+      <select id="cars" name="cars">
+        <option value="1">Yes</option>
+        <option value="0">No</option>
+      </select>
+      <br>
+      <button onclick="myFunction()">Submit</button><br><br>
+       
+    <div class="card">
+        <div class="card-body">
+           <!--- <h4 class="card-title">Rain Information</h4> --->
+
+            <!-- Table with stripped rows -->
+            <table class="table table-striped" id="myTable">
+                <thead>
+                    <tr>
+                        <th scope="col">เกณฑ์ปริมาณฝน</th>
+                        <th scope="col">ช่วงเวลาที่ใช้</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th scope="row">ไม่มีฝนตก (0 mm)</th>
+                        <td>ไม่เกิน xx นาที</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">ฝนตกเล็กน้อย (0.1 - 10 mm)</th>
+                        <td>xx นาที - xx นาที</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">ฝนตกปานกลาง (10.1 - 35 mm)</th>
+                        <td>xx นาที - xx นาที</td>
+                     </tr>
+                    <tr>
+                        <th scope="row">ฝนตกหนัก (35.1 - 90 mm) </th>
+                        <td>xx นาที - xx นาที</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">ฝนตกหนักมาก ( >90 mm)</th>
+                        <td>อย่างน้อย xx นาที</td>
+                    </tr>
+                </tbody>
+            </table>
+            <!-- End Table with stripped rows -->
+
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+
+            <div></div><div id="rain_table">
+
+        </div>
+    </div>
+
+
+    </div>
+   </div>
+  </div>
+ </body>
+</html>
+
+
+<script>
+function myFunction() {
+ showreference();
+showdata();
+}
+
+function showreference(){
+    var fvehicle_type = document.getElementById("cars").value;
+    var fdistance = document.getElementById("dist").value;
+    var ft1 = 16.13 + (0.222 * 0) + (0.695 * fdistance) - (7.005 * fvehicle_type);
+    var ft2 = 16.13 + (0.222 * 0.1) + (0.695 * fdistance) - (7.005 * fvehicle_type);
+    var ft3 = 16.13 + (0.222 * 10.0) + (0.695 * fdistance) - (7.005 * fvehicle_type);
+    var ft4 = 16.13 + (0.222 * 10.1) + (0.695 * fdistance) - (7.005 * fvehicle_type);
+    var ft5 = 16.13 + (0.222 * 35) + (0.695 * fdistance) - (7.005 * fvehicle_type);
+    var ft6 = 16.13 + (0.222 * 35.1) + (0.695 * fdistance) - (7.005 * fvehicle_type);
+    var ft7 = 16.13 + (0.222 * 90) + (0.695 * fdistance) - (7.005 * fvehicle_type);
+    var ft8 = 16.13 + (0.222 * 90.1) + (0.695 * fdistance) - (7.005 * fvehicle_type);
+
+    document.getElementById("myTable").rows[1].cells[1].innerHTML = 'ไม่เกิน ' + Math.round(ft1) + ' นาที';
+    document.getElementById("myTable").rows[2].cells[1].innerHTML = 'อยู่ระหว่าง ' + Math.round(ft2) + ' ถึง ' + Math.round(ft3) + ' นาที';
+    document.getElementById("myTable").rows[3].cells[1].innerHTML = 'อยู่ระหว่าง ' + Math.round(ft4) + ' ถึง ' + Math.round(ft5) + ' นาที';
+    document.getElementById("myTable").rows[4].cells[1].innerHTML = 'อยู่ระหว่าง ' + Math.round(ft6) + ' ถึง ' + Math.round(ft7) + ' นาที';
+    document.getElementById("myTable").rows[5].cells[1].innerHTML = 'อย่างน้อย ' + Math.round(ft8) + ' นาที';
+}
+
+//$(document).ready(function(){
+// $('#load_data').click(function(){
+function showdata(){
+  var date = new Date();
+  var dYear = date.getFullYear() + 543;
+  var dMonth = date.getMonth();
+  var dDate = date.getDate();
+  var dHour = date.getHours();
+  var dMinute = date.getMinutes();
+  const months = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+  $.ajax({
+   url:"rain_data.csv",
+   dataType:"text",
+   success:function(data)
+   {
+        var employee_data = data.split(/\r?\n|\r/);
+        var table_data = '<h4 class="card-title">วันนี้ ' + dDate + ' ' + months[dMonth] + ' ' + dYear + '  เวลา ' + dHour + ':' + dMinute + '</h4>';
+        table_data += '<table class="table table-bordered table-striped">';
+        table_data += '<th>ปี</th><th>ปริมาณฝน</th><th>เวลาเดินทาง</th>'; 
+         
+        for(var count = 0; count<employee_data.length; count++)
+        {
+            var cell_data = employee_data[count].split(",");
+            var rVolume = 0.0;
+            if ((cell_data[2] == dDate) && (cell_data[3] == dMonth+1))
+            {
+                table_data += '<tr>';
+                if (dHour >= 0 && dHour < 1) {                       
+                   rVolume = cell_data[5];
+                } else if (dHour >= 1 && dHour < 4) {
+                   rVolume = cell_data[6];
+                } else if (dHour >= 4 && dHour < 7) {
+                   rVolume = cell_data[7]; 
+                } else if (dHour >= 7 && dHour < 10) {
+                   rVolume = cell_data[8];
+                } else if (dHour >= 10 && dHour < 13) {
+                   rVolume = cell_data[9];
+                } else if (dHour >= 13 && dHour < 16) {
+                   rVolume = cell_data[10];
+                } else if (dHour >= 16 && dHour < 19) {
+                   rVolume = cell_data[11];
+                } else if (dHour >= 19 && dHour < 22) {
+                   rVolume = cell_data[12]; 
+                } else if (dHour >= 22) {
+                   rVolume = cell_data[5];
+                } else{
+                   rVolume = 0.0; 
+                }
+
+                    table_data += '<td>'+cell_data[4]+'</td>'; 
+                    table_data += '<td>'+rVolume+'</td>';
+
+                if (rVolume >= 0 && rVolume <= 0.1) {                       
+                    table_data += '<td>'+ document.getElementById("myTable").rows[1].cells[1].innerHTML +'</td>';
+                } else if (rVolume > 0.1 && rVolume <= 10) {
+                    table_data += '<td>'+ document.getElementById("myTable").rows[2].cells[1].innerHTML +'</td>';
+                } else if (rVolume > 10 && rVolume <= 35) {
+                    table_data += '<td>'+ document.getElementById("myTable").rows[3].cells[1].innerHTML +'</td>';
+                } else if (rVolume > 35 && rVolume <= 90) {
+                    table_data += '<td>'+ document.getElementById("myTable").rows[4].cells[1].innerHTML +'</td>';
+                } else if (rVolume > 90) {
+                    table_data += '<td>'+ document.getElementById("myTable").rows[5].cells[1].innerHTML +'</td>';
+                } else {
+                    table_data += '<td> Unknown </td>';
+                }
+            }
+            table_data += '</tr>';
+        }
+        table_data += '</table>';
+        $('#rain_table').html(table_data);
+   }
+  });
+  }
+ //});
+ 
+//});
+showreference();
+showdata();
+</script>
